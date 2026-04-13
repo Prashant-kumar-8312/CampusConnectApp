@@ -61,6 +61,7 @@ app.post("/api/auth/store-fcm-token", authenticateRequest, async (req: any, res)
 
 app.post("/api/send-notification", async (req, res) => {
   try {
+    console.log("full body", req.body);
     const { erpid } = req.body;
 
     if (!erpid) {
@@ -121,6 +122,11 @@ app.post("/api/attendance", authenticateRequest, async (req: any, res) => {
     console.error("ERROR:", err);
     res.status(500).json({ error: "Server error" });
   }
+});
+
+app.get("/test", (req, res) => {
+  console.log("🔥 TEST HIT");
+  res.send("ok");
 });
 
 app.use("/api", notificationRoutes);

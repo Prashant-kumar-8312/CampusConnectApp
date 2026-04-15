@@ -1,19 +1,12 @@
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import messaging from '@react-native-firebase/messaging';
-
-import {
-  requestNotificationPermission,
-  getFCMToken,
-  setupForegroundListener
-} from '../services/notificationService';
-
+import { requestNotificationPermission, getFCMToken, setupForegroundListener } from '../services/notificationService';
 
 // 🔥🔥 VERY IMPORTANT (OUTSIDE COMPONENT)
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   console.log('Background Message:', remoteMessage);
 });
-
 
 export default function RootLayout() {
 
@@ -42,6 +35,7 @@ export default function RootLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
     </Stack>
   );

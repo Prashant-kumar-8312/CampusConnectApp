@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState , useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import HomeComponent from '../components/Home/HomeComponent';
 import LoginComponent from '../components/Logins/LoginComponent';
-import { requestNotificationPermission, setupForegroundListener, setupBackgroundHandler } from '../services/notificationService';
+
+import { requestNotificationPermission, setupForegroundListener , setupBackgroundHandler } from '../services/notificationService';
 
 type AuthUser = {
   id: string;
@@ -46,7 +47,7 @@ export default function Login() {
     loadAuthData();
   }, []);
 
-  // Setup notifications
+   // Setup notifications
   useEffect(() => {
     const setupNotifications = async () => {
       const enabled = await requestNotificationPermission();
@@ -57,7 +58,10 @@ export default function Login() {
     };
 
     setupNotifications();
+
   }, []);
+
+
 
   // 🔐 Login success handler
   const handleLoginSuccess = async (

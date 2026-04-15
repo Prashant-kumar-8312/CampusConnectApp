@@ -1,31 +1,49 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet, Text } from 'react-native';
 import React from 'react';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 10 : 8);
+  const tabBarBottomPadding = bottomInset + (Platform.OS === 'android' ? 8 : 4);
+  const tabBarHeight = (Platform.OS === 'android' ? 61 : 54) + tabBarBottomPadding;
+    
+
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,
+        tabBarShowLabel: true,
+        tabBarLabelPosition: 'below-icon',
+        tabBarAllowFontScaling: false,
         tabBarActiveTintColor: '#dbeafe',
         tabBarInactiveTintColor: '#94a3b8',
         tabBarActiveBackgroundColor: '#1e40af',
-        tabBarLabelStyle: styles.tabBarLabel,
         tabBarIconStyle: styles.tabBarIcon,
         tabBarItemStyle: styles.tabBarItem,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: tabBarHeight,
+            paddingBottom: tabBarBottomPadding,
+          },
+        ],
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
           title: 'Home',
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} />
+          tabBarLabel: ({ color }) => (
+            <Text allowFontScaling={false} numberOfLines={1} style={[styles.tabBarLabel, { color }]}>Home</Text>
+          ),
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={22} />
           ),
         }}
       />
@@ -33,10 +51,12 @@ export default function TabLayout() {
         name="attendance"
         options={{
           title: 'Previous Attendance',
-          tabBarLabel: 'Attendance',
+          tabBarLabel: ({ color }) => (
+            <Text allowFontScaling={false} numberOfLines={1} style={[styles.tabBarLabel, { color }]}>Attendance</Text>
+          ),
 
-           tabBarIcon: ({ color, size, focused }) => (
-             <MaterialIcons name="history" color={color} size={size} />
+           tabBarIcon: ({ color }) => (
+             <MaterialIcons name="history" color={color} size={22} />
           ),
       
         
@@ -48,36 +68,35 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 16,
-    height: 70,
-    borderTopWidth: 0,
+    position: 'relative',
+    borderTopWidth: 1,
     backgroundColor: '#0f172a',
-    borderRadius: 20,
-    elevation: 12,
+    borderRadius: 0,
+    elevation: 0,
     shadowColor: '#020617',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    paddingTop: 6,
     paddingHorizontal: 8,
-    borderWidth: 1,
     borderColor: '#1e293b',
   },
   tabBarItem: {
     borderRadius: 14,
     marginHorizontal: 4,
-    marginVertical: 2,
+    marginVertical: 1,
+    paddingTop: 2,
+    paddingBottom: 4,
   },
   tabBarIcon: {
-    marginTop: 2,
+     marginTop:2,
+  
   },
   tabBarLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '600',
     marginBottom: 4,
+    textAlign: 'center',
   },
 });

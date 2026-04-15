@@ -1,7 +1,9 @@
-import messaging from '@react-native-firebase/messaging';
+import messaging, { onTokenRefresh } from '@react-native-firebase/messaging';
 import { Alert } from 'react-native';
 
+
 export async function requestNotificationPermission() {
+
   const authStatus = await messaging().requestPermission();
 
   const enabled =
@@ -16,6 +18,7 @@ export async function requestNotificationPermission() {
 }
 
 export async function getFCMToken() {
+
   const token = await messaging().getToken();
   console.log('FCM Token:', token);
   return token;
@@ -34,7 +37,8 @@ export function setupForegroundListener() {
 }
 
 export function setupBackgroundHandler() {
-  messaging().setBackgroundMessageHandler(async remoteMessage => {
+
+     messaging().setBackgroundMessageHandler(async remoteMessage => {
     console.log('Background Message:', remoteMessage);
     // Handle background message (e.g., update local state, show notification)
     // Firebase handles showing notification automatically
@@ -42,6 +46,7 @@ export function setupBackgroundHandler() {
 }
 
 export function setupTokenRefresh(onTokenRefresh: (token: string) => void) {
+
   return messaging().onTokenRefresh(token => {
     console.log('Token refreshed:', token);
     onTokenRefresh(token);

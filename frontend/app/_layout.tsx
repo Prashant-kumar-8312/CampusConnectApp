@@ -1,13 +1,7 @@
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import messaging from '@react-native-firebase/messaging';
-
-import {
-  requestNotificationPermission,
-  getFCMToken,
-  setupForegroundListener
-} from '../services/notificationService';
-
+import { requestNotificationPermission, getFCMToken, setupForegroundListener } from '../services/notificationService';
 
 // Register background handler defensively so app won't crash when Firebase
 // is not configured in a build variant.
@@ -18,7 +12,6 @@ try {
 } catch (error) {
   console.warn('Background handler not registered:', error);
 }
-
 
 export default function RootLayout() {
 
@@ -47,6 +40,7 @@ export default function RootLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
     </Stack>
   );

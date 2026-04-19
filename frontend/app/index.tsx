@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import HomeComponent from '../components/Home/HomeComponent';
 import LoginComponent from '../components/Logins/LoginComponent';
 import { requestNotificationPermission, setupForegroundListener , setupBackgroundHandler } from '../services/notificationService';
 
@@ -33,8 +32,8 @@ export default function Login() {
           setToken(savedToken);
           setUser(JSON.parse(savedUser));
 
-          // 🔥 Auto redirect if already logged in
-          router.replace('/(tabs)/home' as any);
+          // Auto redirect if already logged in
+          router.replace('/(tabs)/home');
         }
       } catch (error) {
         console.log('Error loading auth:', error);
@@ -74,8 +73,8 @@ export default function Login() {
       setToken(nextToken);
       setUser(nextUser);
 
-      // 🔥 Navigate after login
-      router.replace('/(tabs)/home' as any);
+      // Navigate after login
+      router.replace('/(tabs)/home');
     } catch (error) {
       console.log('Login save error:', error);
     }
@@ -111,13 +110,6 @@ export default function Login() {
     );
   }
 
-  // ✅ If logged in → show Home
-  return (
-    <HomeComponent
-      user={user}
-      token={token}
-      apiBaseUrl={apiBaseUrl}
-      onLogout={handleLogout}
-    />
-  );
+  // If logged in, the app navigates into the tabs stack.
+  return null;
 }

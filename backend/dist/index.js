@@ -100,6 +100,26 @@ app.get("/api/attendance", authMiddleware_1.authenticateRequest, (req, res) => _
         res.status(500).json({ error: "Server error" });
     }
 }));
+app.get("/api/attendance/history", authMiddleware_1.authenticateRequest, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const erpId = (_a = req.authUser) === null || _a === void 0 ? void 0 : _a.erpId;
+        const { data, error } = yield supabase_1.supabase
+            .from("attendance_logs")
+            .select("*")
+            .eq("erpid", erpId)
+            .order("date", { ascending: false })
+            .order("login_time", { ascending: false, nullsFirst: false })
+            .limit(100);
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+        res.json({ attendance: data !== null && data !== void 0 ? data : [] });
+    }
+    catch (_err) {
+        res.status(500).json({ error: "Server error" });
+    }
+}));
 app.post("/api/attendance", authMiddleware_1.authenticateRequest, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {

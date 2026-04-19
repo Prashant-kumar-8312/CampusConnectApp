@@ -106,6 +106,28 @@ app.get("/api/attendance", authenticateRequest, async (req: any, res) => {
   }
 });
 
+app.get("/api/attendance/history", authenticateRequest, async (req: any, res) => {
+  try {
+    const erpId = req.authUser?.erpId;
+
+    const { data, error } = await supabase
+      .from("attendance_logs")
+      .select("*")
+      .eq("erpid", erpId)
+      .order("date", { ascending: false })
+      .order("login_time", { ascending: false, nullsFirst: false })
+      .limit(100);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ attendance: data ?? [] });
+  } catch (_err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 app.post("/api/attendance", authenticateRequest, async (req: any, res) => {
   try {
     const erpId = req.authUser?.erpId;

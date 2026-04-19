@@ -1,26 +1,26 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Row = {
-   
     erpId: string;
     Shift: string;
-  LoginTime: number;
-    LogoutTime: number;
+    LoginTime: string;
+    LogoutTime: string;
     Day: string;
     Date: string;
-  TotalHours: number;
+    TotalHours: number;
 };
 
-const rows: Row[] = [
-    {  erpId: 'ERP001', Shift: "9:00 AM to 6:00 PM", LoginTime: 10.00, LogoutTime: 18.00, Day: 'Monday', Date: '2023-10-01', TotalHours: 8 },
-    {  erpId: 'ERP001', Shift: "2:00 PM to 10:00 PM", LoginTime: 14.00, LogoutTime: 22.00, Day: 'Tuesday', Date: '2023-10-02', TotalHours: 8 },
-    {  erpId: 'ERP001', Shift: "9:00 AM to 6:00 PM", LoginTime: 10.00, LogoutTime: 18.00, Day: 'Wednesday', Date: '2023-10-03', TotalHours: 8 },
-
-    
-
-];
+type AttendanceApiRow = {
+    erpid?: string | null;
+    shift?: string | null;
+    shift_time?: string | null;
+    login_time?: string | null;
+    logout_time?: string | null;
+    date?: string | null;
+};
 
 const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -30,15 +30,83 @@ const formatDate = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
+const formatTime = (value?: string | null) => {
+    if (!value) return '--';
+    return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const toDayName = (dateStr?: string | null) => {
+    if (!dateStr) return '--';
+    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' });
+};
+
 export default function PreviousAttendance() {
+    const [rows, setRows] = useState<Row[]>([]);
     const [filterMode, setFilterMode] = useState<'day' | 'date'>('day');
     const [selectedDay, setSelectedDay] = useState('All');
     const [selectedDate, setSelectedDate] = useState('All');
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [datePickerValue, setDatePickerValue] = useState(new Date(`${rows[0].Date}T00:00:00`));
+    const [datePickerValue, setDatePickerValue] = useState(new Date());
     const tableRef = useRef<ScrollView>(null);
     const filterRef = useRef<ScrollView>(null);
     const dayOptions = useMemo(() => ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], []);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const token = await AsyncStorage.getItem('token');
+                if (!token) {
+                    setRows([]);
+                    return;
+                }
+
+                const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL ?? 'https://campusconnectapp-lu1d.onrender.com';
+                const response = await fetch(`${apiBaseUrl}/api/attendance/history`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const payload = (await response.json()) as { attendance?: AttendanceApiRow[]; error?: string };
+                if (!response.ok || !payload?.attendance) {
+                    setRows([]);
+                    return;
+                }
+
+                const mapped = payload.attendance.map((item) => {
+                    const loginTimeRaw = item.login_time ?? null;
+                    const logoutTimeRaw = item.logout_time ?? null;
+                    const loginMs = loginTimeRaw ? new Date(loginTimeRaw).getTime() : null;
+                    const logoutMs = logoutTimeRaw ? new Date(logoutTimeRaw).getTime() : null;
+                    const totalHours =
+                        loginMs && logoutMs && logoutMs > loginMs
+                            ? (logoutMs - loginMs) / (1000 * 60 * 60)
+                            : 0;
+
+                    return {
+                        erpId: item.erpid ?? '--',
+                        Shift: item.shift ?? item.shift_time ?? '--',
+                        LoginTime: formatTime(loginTimeRaw),
+                        LogoutTime: formatTime(logoutTimeRaw),
+                        Day: toDayName(item.date),
+                        Date: item.date ?? '--',
+                        TotalHours: totalHours,
+                    };
+                });
+
+                setRows(mapped);
+
+                const firstDate = mapped.find((row) => row.Date !== '--')?.Date;
+                if (firstDate) {
+                    setDatePickerValue(new Date(`${firstDate}T00:00:00`));
+                }
+            } catch (_error) {
+                setRows([]);
+            }
+        };
+
+        fetchHistory();
+    }, []);
 
     const filteredRows = useMemo(
         () =>
@@ -179,8 +247,8 @@ export default function PreviousAttendance() {
                                     <Text style={styles.cell}>{row.Shift}</Text>
                                     <Text style={styles.cell}>{row.Day}</Text>
                                     <Text style={styles.cell}>{row.Date}</Text>
-                                    <Text style={styles.cell}>{row.LoginTime.toFixed(2)} AM</Text>
-                                    <Text style={styles.cell}>{row.LogoutTime.toFixed(2)} PM</Text>
+                                    <Text style={styles.cell}>{row.LoginTime}</Text>
+                                    <Text style={styles.cell}>{row.LogoutTime}</Text>
                                     <Text style={styles.cell}>{row.TotalHours.toFixed(2)}</Text>
                                 </View>
                             ))

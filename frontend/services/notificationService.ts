@@ -1,5 +1,5 @@
 import messaging from '@react-native-firebase/messaging';
-import { Alert, PermissionsAndroid, Platform } from 'react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NOTIFICATION_PERMISSION_ASKED_KEY = 'notification_permission_asked';
@@ -66,12 +66,9 @@ export async function getFCMToken() {
 export function setupForegroundListener() {
   try {
     return messaging().onMessage(async remoteMessage => {
-      console.log('Foreground Message:', remoteMessage);
-
-      Alert.alert(
-        remoteMessage.notification?.title || 'Notification',
-        remoteMessage.notification?.body || ''
-      );
+      // Intentionally do not show in-app alerts.
+      // We only want OS/system notifications when app is in background/closed.
+      console.log('Foreground message received (no in-app popup):', remoteMessage?.messageId);
     });
   } catch (error) {
     console.warn('Foreground listener unavailable:', error);

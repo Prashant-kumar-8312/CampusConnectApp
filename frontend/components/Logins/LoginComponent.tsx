@@ -190,6 +190,7 @@ const styles = StyleSheet.create({
     paddingTop: 67,
    // backgroundColor: '#0f172a',
     backgroundColor:'#7f1d1d',
+   // backgroundColor: '#FFFFFF',
     overflow: 'hidden',
   },
   imageContainer: {

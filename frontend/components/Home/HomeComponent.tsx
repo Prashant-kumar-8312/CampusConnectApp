@@ -6,6 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
+  RefreshControl,
 } from 'react-native';
 
 type AuthUser = {
@@ -45,17 +47,24 @@ export default function HomeComponent({
 }: Props) {
   const [attendance, setAttendance] = useState<Row | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasAttendanceData, setHasAttendanceData] = useState(true);
 
-  const fetchAttendance = useCallback(async () => {
-    setLoading(true);
+  const fetchAttendance = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setErrorMessage(null);
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/attendance`, {
+      const res = await fetch(`${apiBaseUrl}/api/attendance?refresh=${Date.now()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        cache: 'no-store',
       });
 
       const json = await res.json();
@@ -68,10 +77,13 @@ export default function HomeComponent({
       const latest = json?.attendance?.[0];
 
       if (!latest) {
-        setErrorMessage('No attendance data found.');
+        setAttendance(null);
+        setHasAttendanceData(false);
         return;
       }
 
+      setHasAttendanceData(true);
+     // setHasAttendanceData(false);
       const loginDate = latest.login_time;
       const logoutDate = latest.logout_time;
 
@@ -93,9 +105,17 @@ export default function HomeComponent({
     } catch {
       setErrorMessage('Cannot reach server.');
     } finally {
-      setLoading(false);
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   }, [apiBaseUrl, token, user]);
+
+  const handleRefresh = useCallback(() => {
+    fetchAttendance(true);
+  }, [fetchAttendance]);
 
   useEffect(() => {
     fetchAttendance();
@@ -117,7 +137,10 @@ export default function HomeComponent({
       <View style={styles.loadingContainer}>
         <Text style={styles.errorText}>{errorMessage}</Text>
 
-        <TouchableOpacity style={styles.retryButton} onPress={fetchAttendance}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => fetchAttendance()}
+        >
           <Text style={styles.retryText}>Retry</Text>
         </TouchableOpacity>
 
@@ -134,9 +157,14 @@ export default function HomeComponent({
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.heroCard}>
+
         <Text style={styles.welcomeText}>Welcome back</Text>
-        <Text style={styles.title}>{attendance?.name}</Text>
-        <Text style={styles.subtitle}>Track your campus attendance</Text>
+        <View style={styles.user}>
+        <Text style={styles.title}>{attendance?.name ?? user?.name ?? 'Faculty'}</Text>         
+
+       
+
+             
 
         {onLogout && (
           <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
@@ -144,47 +172,71 @@ export default function HomeComponent({
           </TouchableOpacity>
         )}
 
+        </View>
+
+         <Text style={styles.subtitle}>Track your campus attendance</Text>
+
         <View style={styles.statsRow}>
           <View style={styles.statChip}>
             <Text style={styles.statLabel}>Date</Text>
-            <Text style={styles.statValue}>{attendance?.date}</Text>
+            <Text style={styles.statValue}>{attendance?.date ?? '--'}</Text>
           </View>
 
           <View style={styles.statChip}>
             <Text style={styles.statLabel}>Hours</Text>
             <Text style={styles.statValue}>
-              {attendance?.totalHours.toFixed(2)}h
+              {hasAttendanceData ? `${attendance?.totalHours.toFixed(2)}h` : '--'}
             </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.tableWrapper}>
-        <Text style={styles.sectionTitle}>Today's Attendance</Text>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Today's Attendance</Text>
+          {refreshing && (
+            <View style={styles.sectionRefreshingBadge}>
+              <ActivityIndicator size="small" color="#7f1d1d" />
+              <Text style={styles.sectionRefreshingText}>Updating...</Text>
+            </View>
+          )}
+        </View>
 
-        <View style={styles.detailsTable}>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>ERP ID</Text>
-            <Text style={styles.detailValue}>{attendance?.erpId}</Text>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Login</Text>
-            <Text style={styles.detailValue}>{attendance?.loginTime}</Text>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Logout</Text>
-            <Text style={styles.detailValue}>{attendance?.logoutTime}</Text>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Total Hours</Text>
-            <Text style={styles.detailValue}>
-              {attendance?.totalHours.toFixed(2)}
+        {!hasAttendanceData ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateTitle}>No attendance data yet</Text>
+            <Text style={styles.emptyStateText}>
+              Pull down to refresh when your attendance is available.
             </Text>
           </View>
-        </View>
+
+        ) : (
+          <View style={styles.detailsTable}>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>ERP ID</Text>
+              <Text style={styles.detailValue}>{attendance?.erpId ?? '--'}</Text>
+            </View>
+
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Login</Text>
+              <Text style={styles.detailValue}>{attendance?.loginTime ?? '--'}</Text>
+            </View>
+
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Logout</Text>
+              <Text style={styles.detailValue}>{attendance?.logoutTime ?? '--'}</Text>
+            </View>
+
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Total Hours</Text>
+              <Text style={styles.detailValue}>
+                {attendance ? attendance.totalHours.toFixed(2) : '--'}
+              </Text>
+            </View>
+          </View>
+        )}
+      
+
       </View>
     </SafeAreaView>
   );
@@ -197,11 +249,21 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingHorizontal: 16,
   },
+  screenContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
+  },
+  user: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   loadingText: {
     color: '#7f1d1d',
@@ -224,6 +286,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
   },
+  refreshingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  refreshingText: {
+    color: '#FFF8F0',
+    fontWeight: '600',
+  },
   welcomeText: {
     color: '#F5E6D3',
   },
@@ -231,20 +303,24 @@ const styles = StyleSheet.create({
     color: '#FFF8F0',
     fontSize: 22,
     fontWeight: '800',
+    flex: 1,
+    marginRight: 8,
   },
   subtitle: {
     color: '#F5E6D3',
+    marginTop:8,
   },
   logoutButton: {
-    marginTop: 12,
     paddingVertical: 8,
     paddingHorizontal: 12,
     backgroundColor: '#5c1212',
+    
     borderRadius: 10,
-    alignSelf: 'flex-start',
+    alignSelf: 'auto',
   },
   logoutText: {
-    color: '#FFF8F0',
+ //   color: '#FFF8F0',
+ color:'#db0b0b',
     fontWeight: '700',
   },
   statsRow: {
@@ -278,11 +354,43 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  sectionRefreshingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sectionRefreshingText: {
+    color: '#7f1d1d',
+    fontWeight: '600',
+  },
   detailsTable: {
     marginTop: 10,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
+  },
+  emptyState: {
+    marginTop: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#FFF8F0',
+    borderWidth: 1,
+    borderColor: '#E8D5C4',
+  },
+  emptyStateTitle: {
+    color: '#7f1d1d',
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  emptyStateText: {
+    color: '#9e7b6e',
   },
   detailItem: {
     width: '48%',

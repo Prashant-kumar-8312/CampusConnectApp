@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -154,14 +155,7 @@ export default function HomeComponent({
 
   // 🔥 Main UI (your original design)
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.screenContent}
-      alwaysBounceVertical
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
-    >
+    <SafeAreaView style={styles.screen}>
       <View style={styles.heroCard}>
 
         <Text style={styles.welcomeText}>Welcome back</Text>
@@ -244,13 +238,7 @@ export default function HomeComponent({
       
 
       </View>
-       <View >
-         <Text style={{ color: '#7f1d1d', fontSize: 12, marginTop: 8 , fontWeight: '600' }}>
-          * Swipe down to refresh
-        </Text>
-        </View>
-
-    </ScrollView>
+    </SafeAreaView>
   );
 }
 

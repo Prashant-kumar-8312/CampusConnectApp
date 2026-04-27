@@ -18,7 +18,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const supabase_1 = require("./supabase");
 const JWT_SECRET = (_a = process.env.JWT_SECRET) !== null && _a !== void 0 ? _a : "dev-secret-change-me";
-const JWT_EXPIRATION = "8h";
+const JWT_EXPIRATION = "7d";
 const normalizeErpId = (erpId) => erpId.trim().toUpperCase();
 const resolveErpId = (row) => { var _a, _b; return (_b = (_a = row.erpid) !== null && _a !== void 0 ? _a : row.erp_id) !== null && _b !== void 0 ? _b : ""; };
 const resolvePasswordHash = (row) => { var _a, _b; return (_b = (_a = row.password_hash) !== null && _a !== void 0 ? _a : row.password) !== null && _b !== void 0 ? _b : ""; };

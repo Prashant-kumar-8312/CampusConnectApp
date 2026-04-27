@@ -21,7 +21,7 @@ type UserRow = {
 };
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-me";
-const JWT_EXPIRATION = "8h";
+const JWT_EXPIRATION = "7d";
 
 const normalizeErpId = (erpId: string): string => erpId.trim().toUpperCase();
 

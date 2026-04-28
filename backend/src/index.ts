@@ -59,6 +59,30 @@ app.post("/api/auth/store-fcm-token", authenticateRequest, async (req: any, res)
   }
 });
 
+app.post("/api/auth/remove-fcm-token", authenticateRequest, async (req: any, res) => {
+  try {
+    const erpId = req.authUser?.erpId;
+
+    if (!erpId) {
+      return res.status(400).json({ error: "ERP ID is required" });
+    }
+
+    const { error } = await supabase
+      .from("fcm_tokens")
+      .delete()
+      .eq("erpid", erpId);
+
+    if (error) {
+      console.error("Error removing token:", error);
+      return res.status(500).json({ error: "Failed to remove token" });
+    }
+
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post("/api/send-notification", async (req, res) => {
   try {
     console.log("🔥 RAW BODY:", req.body);

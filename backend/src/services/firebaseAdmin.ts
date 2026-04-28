@@ -105,8 +105,8 @@ export async function sendNotification(
                 android: {
                     priority: 'high',
                     notification: {
-                        channelId: 'attendance_alerts',
-                        sound: 'attendance_tone',
+                        channelId: 'attendance_alerts_v2',
+                        sound: 'default',
                     },
                 },
                 apns: {

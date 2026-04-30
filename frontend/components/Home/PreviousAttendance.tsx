@@ -9,12 +9,14 @@ type Row = {
   Day: string;
   LoginTime: string;
   LogoutTime: string;
-  TotalHours: number;
+  TotalHoursLabel: string;
 };
 
 type AttendanceApiRow = {
   login_time?: string | null;
   logout_time?: string | null;
+  final_logout_time?: string | null;
+  effective_logout_time?: string | null;
   date?: string | null;
 };
 
@@ -29,6 +31,22 @@ const formatMonth = (date: Date) =>
 const formatTime = (value?: string | null) => {
   if (!value) return '--';
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatDuration = (start?: string | null, end?: string | null) => {
+  if (!start || !end) return '--';
+
+  const startTime = new Date(start).getTime();
+  const endTime = new Date(end).getTime();
+  const diffMs = endTime - startTime;
+
+  if (diffMs <= 0) return '--';
+
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${hours}h ${String(minutes).padStart(2, '0')}m`;
 };
 
 const toDayName = (dateStr?: string | null) => {
@@ -64,20 +82,15 @@ export default function PreviousAttendance() {
         const data = await res.json();
 
         const mapped = data.attendance.map((item: AttendanceApiRow) => {
-          const login = item.login_time ? new Date(item.login_time) : null;
-          const logout = item.logout_time ? new Date(item.logout_time) : null;
-
-          const totalHours =
-            login && logout && logout > login
-              ? (logout.getTime() - login.getTime()) / (1000 * 60 * 60)
-              : 0;
+          const effectiveLogoutTime =
+            item.effective_logout_time ?? item.final_logout_time ?? item.logout_time;
 
           return {
             Date: item.date ?? '--',
             Day: toDayName(item.date),
             LoginTime: formatTime(item.login_time),
-            LogoutTime: formatTime(item.logout_time),
-            TotalHours: totalHours,
+            LogoutTime: formatTime(effectiveLogoutTime),
+            TotalHoursLabel: formatDuration(item.login_time, effectiveLogoutTime),
           };
         });
 
@@ -287,7 +300,7 @@ export default function PreviousAttendance() {
                     <Text style={styles.cell}>{row.Day}</Text>
                     <Text style={styles.cell}>{row.LoginTime}</Text>
                     <Text style={styles.cell}>{row.LogoutTime}</Text>
-                    <Text style={styles.cell}>{row.TotalHours.toFixed(2)}</Text>
+                    <Text style={styles.cell}>{row.TotalHoursLabel}</Text>
                   </View>
                 ))
               )}

@@ -124,7 +124,12 @@ app.get("/api/attendance", authenticateRequest, async (req: any, res) => {
       return res.status(500).json({ error: error.message });
     }
 
-    res.json({ attendance: data });
+    const normalizedAttendance = (data ?? []).map((item: any) => ({
+      ...item,
+      effective_logout_time: item.final_logout_time ?? item.logout_time ?? null,
+    }));
+
+    res.json({ attendance: normalizedAttendance });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
@@ -146,7 +151,12 @@ app.get("/api/attendance/history", authenticateRequest, async (req: any, res) =>
       return res.status(500).json({ error: error.message });
     }
 
-    res.json({ attendance: data ?? [] });
+    const normalizedAttendance = (data ?? []).map((item: any) => ({
+      ...item,
+      effective_logout_time: item.final_logout_time ?? item.logout_time ?? null,
+    }));
+
+    res.json({ attendance: normalizedAttendance });
   } catch (_err) {
     res.status(500).json({ error: "Server error" });
   }

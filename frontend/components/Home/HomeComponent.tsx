@@ -23,7 +23,7 @@ type Row = {
   loginTime: string;
   logoutTime: string;
   date: string;
-  totalHours: number;
+  totalHoursLabel: string;
 };
 
 type Props = {
@@ -43,6 +43,22 @@ const formatDate = (dateStr: string | null) => {
   if (!dateStr) return '--';
   const date = new Date(dateStr + 'T00:00:00');
   return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+};
+
+const formatDuration = (start?: string | null, end?: string | null) => {
+  if (!start || !end) return '--';
+
+  const startTime = new Date(start).getTime();
+  const endTime = new Date(end).getTime();
+  const diffMs = endTime - startTime;
+
+  if (diffMs <= 0) return '--';
+
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${hours}h ${String(minutes).padStart(2, '0')}m`;
 };
 
 export default function HomeComponent({
@@ -91,14 +107,8 @@ export default function HomeComponent({
       setHasAttendanceData(true);
      // setHasAttendanceData(false);
       const loginDate = latest.login_time;
-      const logoutDate = latest.logout_time;
-
-      let totalHours = 0;
-      if (loginDate && logoutDate) {
-        const diff =
-          new Date(logoutDate).getTime() - new Date(loginDate).getTime();
-        totalHours = diff > 0 ? diff / (1000 * 60 * 60) : 0;
-      }
+      const logoutDate =
+        latest.effective_logout_time ?? latest.final_logout_time ?? latest.logout_time;
 
       setAttendance({
         name: user?.name ?? latest.name ?? '',
@@ -106,7 +116,7 @@ export default function HomeComponent({
         loginTime: formatTime(loginDate),
         logoutTime: formatTime(logoutDate),
         date: formatDate(latest.date),
-        totalHours,
+        totalHoursLabel: formatDuration(loginDate, logoutDate),
       });
     } catch {
       setErrorMessage('Cannot reach server.');
@@ -198,7 +208,7 @@ export default function HomeComponent({
           <View style={styles.statChip}>
             <Text style={styles.statLabel}>Hours</Text>
             <Text style={styles.statValue}>
-              {hasAttendanceData ? `${attendance?.totalHours.toFixed(2)}h` : '--'}
+              {hasAttendanceData ? attendance?.totalHoursLabel ?? '--' : '--'}
             </Text>
           </View>
         </View>
@@ -247,7 +257,7 @@ export default function HomeComponent({
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Total Hours</Text>
               <Text style={styles.detailValue}>
-                {attendance ? attendance.totalHours.toFixed(2) : '--'}
+                {attendance?.totalHoursLabel ?? '--'}
               </Text>
             </View>
           </View>

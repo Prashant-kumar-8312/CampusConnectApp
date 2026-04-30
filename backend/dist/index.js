@@ -94,7 +94,8 @@ app.get("/api/attendance", authMiddleware_1.authenticateRequest, (req, res) => _
         if (error) {
             return res.status(500).json({ error: error.message });
         }
-        res.json({ attendance: data });
+        const normalizedAttendance = (data !== null && data !== void 0 ? data : []).map((item) => (Object.assign(Object.assign({}, item), { effective_logout_time: item.final_logout_time !== null && item.final_logout_time !== void 0 ? item.final_logout_time : item.logout_time !== null && item.logout_time !== void 0 ? item.logout_time : null })));
+        res.json({ attendance: normalizedAttendance });
     }
     catch (err) {
         res.status(500).json({ error: "Server error" });
@@ -114,7 +115,8 @@ app.get("/api/attendance/history", authMiddleware_1.authenticateRequest, (req, r
         if (error) {
             return res.status(500).json({ error: error.message });
         }
-        res.json({ attendance: data !== null && data !== void 0 ? data : [] });
+        const normalizedAttendance = (data !== null && data !== void 0 ? data : []).map((item) => (Object.assign(Object.assign({}, item), { effective_logout_time: item.final_logout_time !== null && item.final_logout_time !== void 0 ? item.final_logout_time : item.logout_time !== null && item.logout_time !== void 0 ? item.logout_time : null })));
+        res.json({ attendance: normalizedAttendance });
     }
     catch (_err) {
         res.status(500).json({ error: "Server error" });

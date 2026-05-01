@@ -56,6 +56,8 @@ const toDayName = (dateStr?: string | null) => {
 
 
 
+
+
 export default function PreviousAttendance() {
   const [rows, setRows] = useState<Row[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -116,7 +118,36 @@ export default function PreviousAttendance() {
 
   const filteredRows = useMemo(() => {
   if (filterMode === 'date') {
-    if (selectedDate === 'All') return rows;
+    if (selectedDate === 'All') {
+  const today = new Date();
+
+  const dayIndex = today.getDay();
+  const mondayOffset = dayIndex === 0 ? -6 : 1 - dayIndex;
+
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() + mondayOffset);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  const filtered = rows.filter((r) => {
+    const d = new Date(r.Date + 'T00:00:00');
+    return d >= weekStart && d <= weekEnd;
+  });
+
+
+  filtered.sort((a, b) => {
+    const [d1, m1, y1] = a.Date.split('-');
+    const [d2, m2, y2] = b.Date.split('-');
+
+    return new Date(`${y1}-${m1}-${d1}`).getTime() -
+           new Date(`${y2}-${m2}-${d2}`).getTime();
+  });
+
+  return filtered;
+}
 
     const [day, month, year] = selectedDate.split('-');
     const selected = new Date(`${year}-${month}-${day}T00:00:00`);
@@ -133,19 +164,35 @@ export default function PreviousAttendance() {
   }
 
   if (filterMode === 'month') {
-    if (!fromDate || !toDate) return rows;
+    if (!fromDate || !toDate) {
+      const sorted = [...rows];
+
+      sorted.sort((a, b) => {
+        return new Date(a.Date + 'T00:00:00').getTime()
+            - new Date(b.Date + 'T00:00:00').getTime();
+      });
+
+      return sorted;
+    }
 
     const start = fromDate < toDate ? fromDate : toDate;
     const end = fromDate < toDate ? toDate : fromDate;
 
-    // 🔥 make "to" inclusive (end of day)
     const endOfDay = new Date(end);
     endOfDay.setHours(23, 59, 59, 999);
 
-    return rows.filter((r) => {
+    const filtered = rows.filter((r) => {
       const d = new Date(r.Date + 'T00:00:00');
       return d >= start && d <= endOfDay;
     });
+
+    // ✅ THIS is what was missing
+    filtered.sort((a, b) => {
+      return new Date(a.Date + 'T00:00:00').getTime()
+          - new Date(b.Date + 'T00:00:00').getTime();
+    });
+
+    return filtered;
   }
 
   return rows;
